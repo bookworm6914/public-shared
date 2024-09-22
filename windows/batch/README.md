@@ -1,5 +1,5 @@
 ## Note
-You could run these bash scripts from **anywhere** of the machine. Your current working directory does ***_not_** need to be the same directory where these scripts sit.
+You could run these batch scripts from **anywhere** of the machine. Your current working directory does ***_not_** need to be the same directory where these scripts sit.
 
 ## config_win10.cmd
 This NT shell script, or batch file, automates some configurations on a typical Windows 10 Virtual Machine, for the purpose of Windows debugging or testing automation, etc.
