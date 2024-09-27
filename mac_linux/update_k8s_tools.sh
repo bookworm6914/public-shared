@@ -33,10 +33,11 @@ download_kind_cli() {
     fi
 
     if [[ -z "${KIND_BINARY}" || ! -f "${KIND_BINARY}" ]]; then
-        echo -e "\n\t--- Downloading KIND cli ...\n"
 
         # curl -sL https://api.github.com/repos/kubernetes-sigs/kind/releases | jq -r '.[0].assets[] | .browser_download_url'
         latest_version=$(curl -sL https://api.github.com/repos/kubernetes-sigs/kind/releases | jq -r '.[0].name')
+        echo -e "\n\t--- Downloading KIND cli ${latest_version} ...\n"
+
         curl -Lo ${KIND_BINARY} https://github.com/kubernetes-sigs/kind/releases/download/${latest_version}/kind-${TYPE_OS}-${TYPE_PLATFORM}
         chmod +x ${KIND_BINARY}
 
@@ -53,8 +54,9 @@ download_kubectl() {
     fi
 
     if [[ -z "${KUBECTL_BINARY}" || ! -f "${KUBECTL_BINARY}" ]]; then
-        echo -e "\n\t--- Downloading KUBECTL cli ...\n"
-        curl -Lo ${KUBECTL_BINARY} "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/${TYPE_OS}/${TYPE_PLATFORM}/kubectl"
+        latest_version=$(curl -L -s https://dl.k8s.io/release/stable.txt)
+        echo -e "\n\t--- Downloading KUBECTL cli ${latest_version} ...\n"
+        curl -Lo ${KUBECTL_BINARY} "https://dl.k8s.io/release/${latest_version}/bin/${TYPE_OS}/${TYPE_PLATFORM}/kubectl"
         chmod +x ${KUBECTL_BINARY}
 
     else
@@ -70,11 +72,10 @@ download_helm() {
     fi
 
     if [[ -z "${HELM_BINARY}" || ! -f "${HELM_BINARY}" ]]; then
-        echo -e "\n\t--- Downloading HELM cli ...\n"
-
         latest_version=$(curl -sL https://api.github.com/repos/helm/helm/releases | jq -r '.[0].name' | tr -d "Helm ")
-        curl -Lo ${CURRENT_DIR}/helm.tar.gz https://get.helm.sh/helm-v${latest_version}-${TYPE_OS}-${TYPE_PLATFORM}.tar.gz
+        echo -e "\n\t--- Downloading HELM cli ${latest_version} ...\n"
 
+        curl -Lo ${CURRENT_DIR}/helm.tar.gz https://get.helm.sh/helm-v${latest_version}-${TYPE_OS}-${TYPE_PLATFORM}.tar.gz
         tar -zxvf helm.tar.gz
         mv ${CURRENT_DIR}/${TYPE_OS}-${TYPE_PLATFORM}/helm ${CURRENT_DIR}/
         chmod +x ${HELM_BINARY}
@@ -93,9 +94,8 @@ download_istioctl() {
     fi
 
     if [[ -z "${ISTIOCTL_BINARY}" || ! -f "${ISTIOCTL_BINARY}" ]]; then
-        echo -e "\n\t--- Downloading ISTIO cli ...\n"
-
         latest_version=$(curl -sL https://api.github.com/repos/istio/istio/releases/latest | jq -r '.name' | tr -d "Istio ")
+        echo -e "\n\t--- Downloading ISTIO cli ${latest_version} ...\n"
 
         curl -L https://istio.io/downloadIstio | ISTIO_VERSION=${latest_version} sh -
         mv ./istio-${latest_version}/bin/istioctl ./
