@@ -1,103 +1,115 @@
 #!/bin/bash
 
-KIND_VERSION=0.22.0
-HELM_VERSION=3.14.0
-# In case kubectl is missing, we will download the latest stable version
-ISTIOD_VERSION=1.19.4
+TYPE_PLATFORM=""
+TYPE_OS=""
 
-
-KIND_BINARY=$(which kind)
-KUBECTL_BINARY=$(which kubectl)
-HELM_BINARY=$(which helm)
-ISTIOCTL_BINARY=$(which istioctl)
+KIND_BINARY=
+KUBECTL_BINARY=
+HELM_BINARY=
+ISTIOCTL_BINARY=
 
 
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" > /dev/null && pwd )"
+echo -e "\n\t===== Downloading the latest bits of K8s tools if needed ...\n"
 
 
 # --------------------------------------
-download_k8s_tools() {
-    echo -e "\n\t===== Downloading tools if needed ...\n"
-
+check_settings() {
     # For Intel Macs
-    [[ $(uname -m) == x86_64 && $(uname -o) = Darwin ]] && KIND_PLATFORM="amd64" && KIND_OS="darwin"
+    [[ $(uname -m) == x86_64 && $(uname -o) = Darwin ]] && TYPE_PLATFORM="amd64" && TYPE_OS="darwin"
     # For M1 / ARM Macs
-    [[ $(uname -m) = arm64   && $(uname -o) = Darwin ]] && KIND_PLATFORM="arm64" && KIND_OS="darwin"
+    [[ $(uname -m) = arm64   && $(uname -o) = Darwin ]] && TYPE_PLATFORM="arm64" && TYPE_OS="darwin"
     # For Linux AMD64 / x86_64
-    [[ $(uname -m) = x86_64  && $(uname -o) = GNU/Linux ]]  && KIND_PLATFORM="amd64" && KIND_OS="linux"
+    [[ $(uname -m) = x86_64  && $(uname -o) = GNU/Linux ]]  && TYPE_PLATFORM="amd64" && TYPE_OS="linux"
     # For Linux ARM64
-    [[ $(uname -m) = aarch64 && $(uname -o) = GNU/Linux ]]  && KIND_PLATFORM="arm64" && KIND_OS="linux"
+    [[ $(uname -m) = aarch64 && $(uname -o) = GNU/Linux ]]  && TYPE_PLATFORM="arm64" && TYPE_OS="linux"
+}
 
-    export KIND_PLATFORM=${KIND_PLATFORM}
-    export KIND_OS=${KIND_OS}
 
-    # download KIND cli
+# --------------------------------------
+download_kind_cli() {
     if [[ -z "${KIND_BINARY}" ]]; then
         KIND_BINARY=${CURRENT_DIR}/kind
     fi
 
     if [[ -z "${KIND_BINARY}" || ! -f "${KIND_BINARY}" ]]; then
-        KIND_BINARY=${CURRENT_DIR}/kind
         echo -e "\n\t--- Downloading KIND cli ...\n"
-        curl -Lo ${KIND_BINARY} https://kind.sigs.k8s.io/dl/v${KIND_VERSION}/kind-${KIND_OS}-${KIND_PLATFORM}
+
+        # curl -sL https://api.github.com/repos/kubernetes-sigs/kind/releases | jq -r '.[0].assets[] | .browser_download_url'
+        latest_version=$(curl -sL https://api.github.com/repos/kubernetes-sigs/kind/releases | jq -r '.[0].name')
+        curl -Lo ${KIND_BINARY} https://github.com/kubernetes-sigs/kind/releases/download/${latest_version}/kind-${TYPE_OS}-${TYPE_PLATFORM}
         chmod +x ${KIND_BINARY}
+
     else
         echo -e "\n\t--- Found ${KIND_BINARY}. No need to download it.\n"
     fi
+}
 
-    # download kubectl
+
+# --------------------------------------
+download_kubectl() {
     if [[ -z "${KUBECTL_BINARY}" ]]; then
         KUBECTL_BINARY=${CURRENT_DIR}/kubectl
     fi
 
     if [[ -z "${KUBECTL_BINARY}" || ! -f "${KUBECTL_BINARY}" ]]; then
-        KUBECTL_BINARY=${CURRENT_DIR}/kubectl
         echo -e "\n\t--- Downloading KUBECTL cli ...\n"
-        curl -Lo ${KUBECTL_BINARY} "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/${KIND_OS}/${KIND_PLATFORM}/kubectl"
+        curl -Lo ${KUBECTL_BINARY} "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/${TYPE_OS}/${TYPE_PLATFORM}/kubectl"
         chmod +x ${KUBECTL_BINARY}
+
     else
         echo -e "\n\t--- Found ${KUBECTL_BINARY}. No need to download it.\n"
     fi
+}
 
-    # download helm
+
+# --------------------------------------
+download_helm() {
     if [[ -z "${HELM_BINARY}" ]]; then
         HELM_BINARY=${CURRENT_DIR}/helm
     fi
 
     if [[ -z "${HELM_BINARY}" || ! -f "${HELM_BINARY}" ]]; then
-        HELM_BINARY=${CURRENT_DIR}/helm
         echo -e "\n\t--- Downloading HELM cli ...\n"
-        curl -Lo ${CURRENT_DIR}/helm.tar.gz https://get.helm.sh/helm-v${HELM_VERSION}-${KIND_OS}-${KIND_PLATFORM}.tar.gz
-        pushd ${CURRENT_DIR}
+
+        latest_version=$(curl -sL https://api.github.com/repos/helm/helm/releases | jq -r '.[0].name' | tr -d "Helm ")
+        curl -Lo ${CURRENT_DIR}/helm.tar.gz https://get.helm.sh/helm-v${latest_version}-${TYPE_OS}-${TYPE_PLATFORM}.tar.gz
+
         tar -zxvf helm.tar.gz
-        popd
-        mv ${CURRENT_DIR}/${KIND_OS}-${KIND_PLATFORM}/helm ${CURRENT_DIR}/
+        mv ${CURRENT_DIR}/${TYPE_OS}-${TYPE_PLATFORM}/helm ${CURRENT_DIR}/
         chmod +x ${HELM_BINARY}
-        rm -rf ${CURRENT_DIR}/${KIND_OS}-${KIND_PLATFORM}  ${CURRENT_DIR}/helm.tar.gz
+        rm -rf ${CURRENT_DIR}/${TYPE_OS}-${TYPE_PLATFORM}  ${CURRENT_DIR}/helm.tar.gz
+
     else
         echo -e "\n\t--- Found ${HELM_BINARY}. No need to download it.\n"
     fi
+}
 
-    # download istioctl
+
+# --------------------------------------
+download_istioctl() {
     if [[ -z "${ISTIOCTL_BINARY}" ]]; then
         ISTIOCTL_BINARY=${CURRENT_DIR}/istioctl
     fi
 
     if [[ -z "${ISTIOCTL_BINARY}" || ! -f "${ISTIOCTL_BINARY}" ]]; then
-        ISTIOCTL_BINARY=${CURRENT_DIR}/istioctl
         echo -e "\n\t--- Downloading ISTIO cli ...\n"
 
-        pushd ${CURRENT_DIR}
-        curl -L https://istio.io/downloadIstio | ISTIO_VERSION=${ISTIOD_VERSION} sh -
-        mv ./istio-${ISTIOD_VERSION}/bin/istioctl ./
-        popd
+        latest_version=$(curl -sL https://api.github.com/repos/istio/istio/releases/latest | jq -r '.name' | tr -d "Istio ")
+
+        curl -L https://istio.io/downloadIstio | ISTIO_VERSION=${latest_version} sh -
+        mv ./istio-${latest_version}/bin/istioctl ./
 
         chmod +x ${ISTIOCTL_BINARY}
-        rm -r ${CURRENT_DIR}/istio-${ISTIOD_VERSION}
+        rm -r ${CURRENT_DIR}/istio-${latest_version}
     else
-        echo -e "\n\t--- Found ${ISTIOCTL_BINARY}. No need to download it.\n"
+        echo -e "\n\t--- Found ${latest_version}. No need to download it.\n"
     fi
 }
 
 
-download_k8s_tools
+check_settings
+download_kind_cli
+download_kubectl
+download_helm
+download_istioctl
