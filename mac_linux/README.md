@@ -25,6 +25,7 @@ Then in the bash script, we could set the array variable **pathSet** to include 
 ## update_k8s_tools.sh
 This bash script downloads the latest version of the typical CLI executable files for Kubernetes.
 - kind
+- minikube
 - kubectl
 - helm
 - istioctl
@@ -35,6 +36,7 @@ The script does **NOT** check to see if these tools exist in your `${PATH}`.
 If you intend to skip downloading one tool if it already exists, please set the corresponding variable like this
 ```
 KIND_BINARY=$(which kind)
+MINIKUBE_BINARY=$(which minikube)
 KUBECTL_BINARY=$(which kubectl)
 HELM_BINARY=$(which helm)
 ISTIOCTL_BINARY=$(which istioctl)
