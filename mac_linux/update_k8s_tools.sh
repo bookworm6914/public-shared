@@ -7,6 +7,13 @@ KIND_BINARY=
 KUBECTL_BINARY=
 HELM_BINARY=
 ISTIOCTL_BINARY=
+MINIKUBE_BINARY=
+
+# Refer to https://en.wikipedia.org/wiki/ANSI_escape_code for coloBRED escape codes
+BRED='\e[0;91m'
+BGREEN='\e[0;92m'
+BYELLOW='\e[0;93m'
+NC='\033[0m'           # No Color
 
 
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" > /dev/null && pwd )"
@@ -23,6 +30,11 @@ check_settings() {
     [[ $(uname -m) = x86_64  && $(uname -o) = GNU/Linux ]]  && TYPE_PLATFORM="amd64" && TYPE_OS="linux"
     # For Linux ARM64
     [[ $(uname -m) = aarch64 && $(uname -o) = GNU/Linux ]]  && TYPE_PLATFORM="arm64" && TYPE_OS="linux"
+
+    if ! jq --help &> /dev/null ; then
+        echo -e "${BRED}***** ERROR ***** jq is not installed${NC}\n"
+        exit 101
+    fi
 }
 
 
@@ -43,6 +55,25 @@ download_kind_cli() {
 
     else
         echo -e "\n\t--- Found ${KIND_BINARY}. No need to download it.\n"
+    fi
+}
+
+
+# --------------------------------------
+download_minikube() {
+    if [[ -z "${MINIKUBE_BINARY}" ]]; then
+        MINIKUBE_BINARY=${CURRENT_DIR}/minikube
+    fi
+
+    if [[ -z "${MINIKUBE_BINARY}" || ! -f "${MINIKUBE_BINARY}" ]]; then
+
+        echo -e "\n\t--- Downloading latest version of minikube ...\n"
+
+        curl -Lo ${MINIKUBE_BINARY} https://storage.googleapis.com/minikube/releases/latest/minikube-${TYPE_OS}-${TYPE_PLATFORM}
+        chmod +x ${MINIKUBE_BINARY}
+
+    else
+        echo -e "\n\t--- Found ${MINIKUBE_BINARY}. No need to download it.\n"
     fi
 }
 
@@ -110,6 +141,7 @@ download_istioctl() {
 
 check_settings
 download_kind_cli
+download_minikube
 download_kubectl
 download_helm
 download_istioctl
