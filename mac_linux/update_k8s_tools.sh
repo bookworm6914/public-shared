@@ -106,8 +106,8 @@ download_helm() {
         latest_version=$(curl -sL https://api.github.com/repos/helm/helm/releases | jq -r '.[0].name' | tr -d "Helm ")
         echo -e "\n\t--- Downloading HELM cli ${latest_version} ...\n"
 
-        curl -Lo ${CURRENT_DIR}/helm.tar.gz https://get.helm.sh/helm-v${latest_version}-${TYPE_OS}-${TYPE_PLATFORM}.tar.gz
-        tar -zxvf helm.tar.gz
+        curl -Lo ${CURRENT_DIR}/helm.tar.gz https://get.helm.sh/helm-${latest_version}-${TYPE_OS}-${TYPE_PLATFORM}.tar.gz
+        tar -zxvf ${CURRENT_DIR}/helm.tar.gz -C ${CURRENT_DIR}
         mv ${CURRENT_DIR}/${TYPE_OS}-${TYPE_PLATFORM}/helm ${CURRENT_DIR}/
         chmod +x ${HELM_BINARY}
         rm -rf ${CURRENT_DIR}/${TYPE_OS}-${TYPE_PLATFORM}  ${CURRENT_DIR}/helm.tar.gz
@@ -129,10 +129,10 @@ download_istioctl() {
         echo -e "\n\t--- Downloading ISTIO cli ${latest_version} ...\n"
 
         curl -L https://istio.io/downloadIstio | ISTIO_VERSION=${latest_version} sh -
-        mv ./istio-${latest_version}/bin/istioctl ./
+        mv ./istio-${latest_version}/bin/istioctl ${CURRENT_DIR}
 
         chmod +x ${ISTIOCTL_BINARY}
-        rm -r ${CURRENT_DIR}/istio-${latest_version}
+        rm -r ./istio-${latest_version}
     else
         echo -e "\n\t--- Found ${latest_version}. No need to download it.\n"
     fi
