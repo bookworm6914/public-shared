@@ -1,5 +1,9 @@
 #!/bin/bash
 
+#
+# Download the latest version of the Kubernetes tools
+#
+
 TYPE_PLATFORM=""
 TYPE_OS=""
 
