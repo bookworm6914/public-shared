@@ -12,6 +12,7 @@ KUBECTL_BINARY=
 HELM_BINARY=
 ISTIOCTL_BINARY=
 MINIKUBE_BINARY=
+K9S_BINARY=
 
 # Refer to https://en.wikipedia.org/wiki/ANSI_escape_code for coloBRED escape codes
 BRED='\e[0;91m'
@@ -111,10 +112,10 @@ download_helm() {
         echo -e "\n\t--- Downloading HELM cli ${latest_version} ...\n"
 
         curl -Lo ${CURRENT_DIR}/helm.tar.gz https://get.helm.sh/helm-${latest_version}-${TYPE_OS}-${TYPE_PLATFORM}.tar.gz
-        tar -zxvf ${CURRENT_DIR}/helm.tar.gz -C ${CURRENT_DIR}
-        mv ${CURRENT_DIR}/${TYPE_OS}-${TYPE_PLATFORM}/helm ${CURRENT_DIR}/
+        tar -zxvf ${CURRENT_DIR}/helm.tar.gz -C ${CURRENT_DIR}/tmp
+        mv ${CURRENT_DIR}/tmp/${TYPE_OS}-${TYPE_PLATFORM}/helm ${CURRENT_DIR}/
         chmod +x ${HELM_BINARY}
-        rm -rf ${CURRENT_DIR}/${TYPE_OS}-${TYPE_PLATFORM}  ${CURRENT_DIR}/helm.tar.gz
+        rm -rf ${CURRENT_DIR}/tmp/${TYPE_OS}-${TYPE_PLATFORM}  ${CURRENT_DIR}/helm.tar.gz
 
     else
         echo -e "\n\t--- Found ${HELM_BINARY}. No need to download it.\n"
@@ -143,9 +144,35 @@ download_istioctl() {
 }
 
 
+# --------------------------------------
+download_k9s() {
+    if [[ -z "${K9S_BINARY}" ]]; then
+        K9S_BINARY=${CURRENT_DIR}/k9s
+    fi
+
+    if [[ -z "${K9S_BINARY}" || ! -f "${K9S_BINARY}" ]]; then
+        latest_version=$(curl -s https://api.github.com/repos/derailed/k9s/releases/latest | jq '.name' | tr -d '"')
+        echo -e "\n\t--- Downloading k9s ${latest_version} ...\n"
+
+        curl -LO https://github.com/derailed/k9s/releases/download/${latest_version}/k9s_${TYPE_OS^}_${TYPE_PLATFORM}.tar.gz
+        tar -zxvf ${CURRENT_DIR}/k9s_${TYPE_OS^}_${TYPE_PLATFORM}.tar.gz -C ${CURRENT_DIR}/tmp
+        mv ${CURRENT_DIR}/tmp/k9s ${CURRENT_DIR}
+        rm *.tar.gz    ${CURRENT_DIR}/tmp/*
+
+    else
+        echo -e "\n\t--- Found ${latest_version}. No need to download it.\n"
+    fi
+}
+
+
+mkdir ${CURRENT_DIR}/tmp
+# to comment out multiple lines, use : '  ...  '
 check_settings
 download_kind_cli
 download_minikube
 download_kubectl
 download_helm
 download_istioctl
+download_k9s
+
+rm -r -f ${CURRENT_DIR}/tmp

@@ -23,12 +23,13 @@ Then in the bash script, we could set the array variable **pathSet** to include 
 
 
 ## update_k8s_tools.sh
-This bash script downloads the latest version of the typical CLI executable files for Kubernetes.
+This bash script downloads the latest version of the typical CLI executables for Kubernetes.
 - kind
 - minikube
 - kubectl
 - helm
 - istioctl
+- k9s
 
 This bash script will download these tools in the **same directory** that this shell script resides.
 
@@ -40,6 +41,7 @@ MINIKUBE_BINARY=$(which minikube)
 KUBECTL_BINARY=$(which kubectl)
 HELM_BINARY=$(which helm)
 ISTIOCTL_BINARY=$(which istioctl)
+K9S_BINARY=$(which k9s)
 ```
 
 This script works on
